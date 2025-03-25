@@ -1,14 +1,15 @@
-import 'bootstrap/dist/css/bootstrap.min.css'
-import ProductList from "./components/ProductList"
+import "bootstrap/dist/css/bootstrap.min.css";
+import { Routes,Route } from "react-router-dom";
+
+import ProductList from "./components/ProductList";
 
 function App() {
-
   return (
     <>
-      <ProductList />
-
+    <Routes>
+     <Route path="/" element= {<ProductList />}/>
+      </Routes>
     </>
-  )
+  );
 }
-
-export default App
+export default App;
