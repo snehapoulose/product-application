@@ -11,15 +11,25 @@ const ProductList = () => {
   const [filteredList, setFilteredList] = useState([]);
 
   useEffect(() => {
-    fetch("https://mocki.io/v1/eca56f9c-255f-4f7a-9c31-cece6450a5fc")
-      .then((response) => response.json())
-      .then((data) => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/products");
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
         setProductList(data);
         const prices = data.map((product) => product.price);
         setMinPrice(Math.min(...prices));
         setMaxPrice(Math.max(...prices));
-      });
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      }
+    };
+  
+    fetchProducts();
   }, []);
+  console.log(productList,'productList')
 
   useEffect(() => {
     let filtered = productList;
@@ -63,6 +73,7 @@ const ProductList = () => {
         <Form.Control
           type="text"
           placeholder="Search a product"
+          value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           style={{ flex: "1", minWidth: "200px" }}
         />
