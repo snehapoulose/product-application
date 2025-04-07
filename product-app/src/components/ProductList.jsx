@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Card from "react-bootstrap/Card";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
+import Modal from "react-bootstrap/Modal";
 
 const ProductList = () => {
   const [productList, setProductList] = useState([]);
@@ -10,13 +11,18 @@ const ProductList = () => {
   const [maxPrice, setMaxPrice] = useState(1000);
   const [filteredList, setFilteredList] = useState([]);
 
+  // Edit modal state
+  const [showModal, setShowModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [editName, setEditName] = useState("");
+  const [editPrice, setEditPrice] = useState("");
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const response = await fetch("http://localhost:5000/api/products");
-        if (!response.ok) {
+        if (!response.ok)
           throw new Error(`HTTP error! Status: ${response.status}`);
-        }
         const data = await response.json();
         setProductList(data);
         const prices = data.map((product) => product.price);
@@ -26,10 +32,8 @@ const ProductList = () => {
         console.error("Failed to fetch products:", error);
       }
     };
-  
     fetchProducts();
   }, []);
-  console.log(productList,'productList')
 
   useEffect(() => {
     let filtered = productList;
@@ -50,6 +54,82 @@ const ProductList = () => {
     setMaxPrice(1000);
   };
 
+  const handleEditClick = (product) => {
+    setEditingProduct(product);
+    setEditName(product.name);
+    setEditPrice(product.price);
+    setShowModal(true);
+  };
+
+  const handleEditSubmit = async () => {
+    try {
+      // Validate inputs
+      if (!editName.trim()) {
+        throw new Error("Product name cannot be empty");
+      }
+      if (isNaN(editPrice) || parseFloat(editPrice) <= 0) {
+        throw new Error("Product price must be a positive number");
+      }
+
+      // Prepare updated product object
+      const updatedProduct = {
+        ...editingProduct,
+        name: editName.trim(),
+        price: parseFloat(editPrice),
+      };
+
+      // Send PUT request to update the product
+      const response = await fetch(
+        `http://localhost:5000/api/products/${editingProduct.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedProduct),
+        }
+      );
+
+      // Check for response errors
+      if (!response.ok) {
+        throw new Error(
+          `Failed to update product: ${response.status} ${response.statusText}`
+        );
+      }
+
+      // Parse response JSON
+      const data = await response.json();
+
+      // Update product list state
+      setProductList((prev) => prev.map((p) => (p.id === data.id ? data : p)));
+
+      // Close the modal
+      setShowModal(false);
+    } catch (error) {
+      console.error("Error updating product:", error);
+      // Optionally display error to the user using a toast or modal
+    }
+  };
+  const handleDelete = async (id) => {
+    const confirm = window.confirm(
+      "Are you sure you want to delete this product?"
+    );
+    if (!confirm) return;
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/products/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Failed to delete product");
+
+      // Update state after deletion
+      setProductList((prev) => prev.filter((p) => p.id !== id));
+    } catch (error) {
+      console.error("Error deleting product:", error);
+    }
+  };
+
   return (
     <div style={{ padding: "1.5rem" }}>
       <header
@@ -61,6 +141,7 @@ const ProductList = () => {
       >
         <h1>Products List</h1>
       </header>
+
       <div
         style={{
           display: "flex",
@@ -100,6 +181,7 @@ const ProductList = () => {
           Clear Filters
         </Button>
       </div>
+
       {filteredList.length === 0 ? (
         <p>Loading products...</p>
       ) : (
@@ -108,13 +190,12 @@ const ProductList = () => {
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
             gap: "1.25rem",
-            padding: "1.25rem",
           }}
         >
           {filteredList.map((product) => (
             <Card
               key={product.id}
-              style={{ width: "100%", maxWidth: "250px", margin: "auto" }}
+              style={{ maxWidth: "250px", margin: "auto" }}
             >
               <Card.Img
                 src={product.image}
@@ -126,14 +207,63 @@ const ProductList = () => {
               <Card.Body>
                 <Card.Title>{product.name}</Card.Title>
                 <Card.Subtitle>Category: {product.category}</Card.Subtitle>
-                <Card.Text>
-                  <span>Price: ${product.price.toFixed(2)}</span>
-                </Card.Text>
+                <Card.Text>Price: ${product.price.toFixed(2)}</Card.Text>
+                <div style={{ display: "flex", gap: "1rem" }}>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => handleEditClick(product)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => handleDelete(product.id)}
+                  >
+                    Delete
+                  </Button>
+                </div>
               </Card.Body>
             </Card>
           ))}
         </div>
       )}
+
+      {/* Edit Modal */}
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Product</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group controlId="editName" className="mb-3">
+              <Form.Label>Name</Form.Label>
+              <Form.Control
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group controlId="editPrice">
+              <Form.Label>Price</Form.Label>
+              <Form.Control
+                type="number"
+                value={editPrice}
+                onChange={(e) => setEditPrice(e.target.value)}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="success" onClick={handleEditSubmit}>
+            Save
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
