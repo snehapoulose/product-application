@@ -17,10 +17,12 @@ const ProductList = () => {
   const [editName, setEditName] = useState("");
   const [editPrice, setEditPrice] = useState("");
 
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/products");
+        const response = await fetch(`${API_BASE_URL}/products`);
         if (!response.ok)
           throw new Error(`HTTP error! Status: ${response.status}`);
         const data = await response.json();
@@ -80,7 +82,7 @@ const ProductList = () => {
 
       // Send PUT request to update the product
       const response = await fetch(
-        `http://localhost:5000/api/products/${editingProduct.id}`,
+        `${API_BASE_URL}/products/${editingProduct.id}`,
         {
           method: "PUT",
           headers: {
@@ -117,7 +119,7 @@ const ProductList = () => {
     if (!confirm) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/products/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/products/${id}`, {
         method: "DELETE",
       });
 
