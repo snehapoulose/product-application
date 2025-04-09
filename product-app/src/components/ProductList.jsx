@@ -3,6 +3,8 @@ import Card from "react-bootstrap/Card";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
+import { getApiBaseUrl } from "../config";
+import { checkApiResponse } from "../utils/apiUtils";
 
 const ProductList = () => {
   const [productList, setProductList] = useState([]);
@@ -17,14 +19,14 @@ const ProductList = () => {
   const [editName, setEditName] = useState("");
   const [editPrice, setEditPrice] = useState("");
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
+  const API_BASE_URL = getApiBaseUrl();
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/products`);
-        if (!response.ok)
-          throw new Error(`HTTP error! Status: ${response.status}`);
+        // if (!response.ok)
+        //   throw new Error(`HTTP error! Status: ${response.status}`);
+        await checkApiResponse(response);
         const data = await response.json();
         setProductList(data);
         const prices = data.map((product) => product.price);
@@ -92,12 +94,13 @@ const ProductList = () => {
         }
       );
 
-      // Check for response errors
-      if (!response.ok) {
-        throw new Error(
-          `Failed to update product: ${response.status} ${response.statusText}`
-        );
-      }
+      // // Check for response errors
+      // if (!response.ok) {
+      //   throw new Error(
+      //     `Failed to update product: ${response.status} ${response.statusText}`
+      //   );
+      // }
+      await checkApiResponse(response);
 
       // Parse response JSON
       const data = await response.json();
@@ -123,7 +126,8 @@ const ProductList = () => {
         method: "DELETE",
       });
 
-      if (!response.ok) throw new Error("Failed to delete product");
+      // if (!response.ok) throw new Error("Failed to delete product");
+      await checkApiResponse(response);
 
       // Update state after deletion
       setProductList((prev) => prev.filter((p) => p.id !== id));

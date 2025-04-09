@@ -1,7 +1,7 @@
 const http = require("http");
 
 // Sample product list
-const products = [
+let products = [
   {
     id: "1",
     name: "Modern Ergonomic Chair",
@@ -91,7 +91,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (req.url === "/api/products" && req.method === "GET") {
+  if (req.method === "GET") {
     // Handle GET request to fetch products
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(products));
