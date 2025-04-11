@@ -24,8 +24,6 @@ const ProductList = () => {
     const fetchProducts = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/products`);
-        // if (!response.ok)
-        //   throw new Error(`HTTP error! Status: ${response.status}`);
         await checkApiResponse(response);
         const data = await response.json();
         setProductList(data);
@@ -93,13 +91,6 @@ const ProductList = () => {
           body: JSON.stringify(updatedProduct),
         }
       );
-
-      // // Check for response errors
-      // if (!response.ok) {
-      //   throw new Error(
-      //     `Failed to update product: ${response.status} ${response.statusText}`
-      //   );
-      // }
       await checkApiResponse(response);
 
       // Parse response JSON
@@ -120,13 +111,10 @@ const ProductList = () => {
       "Are you sure you want to delete this product?"
     );
     if (!confirm) return;
-
-    try {
+     try {
       const response = await fetch(`${API_BASE_URL}/products/${id}`, {
         method: "DELETE",
       });
-
-      // if (!response.ok) throw new Error("Failed to delete product");
       await checkApiResponse(response);
 
       // Update state after deletion
