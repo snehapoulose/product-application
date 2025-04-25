@@ -1,4 +1,10 @@
 const http = require("http");
+const {
+  sendJsonResponse,
+  sendBadRequest,
+  sendNotFound,
+  sendSuccess,
+} = require("./responseHelpers.cjs");
 
 // Sample product list
 let products = [
@@ -93,8 +99,8 @@ const server = http.createServer((req, res) => {
 
   if (req.method === "GET") {
     // Handle GET request to fetch products
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(products));
+
+    sendSuccess(res, products);
   } else if (req.url.startsWith("/api/products/") && req.method === "PUT") {
     const urlParts = req.url.split("/");
     const productId = urlParts[urlParts.length - 1];
@@ -111,31 +117,22 @@ const server = http.createServer((req, res) => {
 
         // Validate product data (example: ensure name and price are valid)
         if (!productData.name || typeof productData.name !== "string") {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ message: "Invalid product name" }));
-          return;
+          return sendBadRequest(res, "Invalid product name");
         }
         if (productData.price && typeof productData.price !== "number") {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ message: "Invalid product price" }));
-          return;
+          return sendBadRequest(res, "Invalid product price");
         }
 
         const index = products.findIndex((p) => p.id === productId);
 
         if (index === -1) {
-          res.writeHead(404, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ message: "Product not found" }));
-          return;
+          return sendNotFound(res, "Product not found");
         }
 
         products[index] = { ...products[index], ...productData };
-
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify(products[index]));
+        sendSuccess(res, products[index]);
       } catch (err) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ message: "Invalid JSON" }));
+        return sendBadRequest(res, "Invalid JSON");
       }
     });
   } else if (req.url.startsWith("/api/products/") && req.method === "DELETE") {
@@ -143,9 +140,7 @@ const server = http.createServer((req, res) => {
 
     // Validate the product ID
     if (!id || typeof id !== "string") {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "Invalid product ID" }));
-      return;
+      return sendBadRequest(res, "Invalid product ID");
     }
 
     // Find the product in the array
@@ -153,24 +148,20 @@ const server = http.createServer((req, res) => {
 
     // Handle product not found
     if (index === -1) {
-      res.writeHead(404, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "Product not found" }));
-      return;
+      return sendNotFound(res, "Product not found");
     }
 
     // Remove the product from the array
     const deleted = products[index];
     products = products.filter((p) => p.id !== id); // Immutable update
 
-    // Respond with the deleted product
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(
-      JSON.stringify({
-        message: "Product deleted successfully",
-        product: deleted,
-      })
-    );
+    // // Respond with the deleted product
+    sendSuccess(res, {
+      message: "Product deleted successfully",
+      product: deleted,
+    });
   } else {
+    
     // Handle 404 Not Found for any other requests
     res.writeHead(404, { "Content-Type": "text/plain" });
     res.end("404 Not Found");

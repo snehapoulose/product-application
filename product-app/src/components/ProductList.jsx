@@ -20,6 +20,7 @@ const ProductList = () => {
   const [editPrice, setEditPrice] = useState("");
 
   const API_BASE_URL = getApiBaseUrl();
+  
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -106,6 +107,7 @@ const ProductList = () => {
       // Optionally display error to the user using a toast or modal
     }
   };
+  
   const handleDelete = async (id) => {
     const confirm = window.confirm(
       "Are you sure you want to delete this product?"
